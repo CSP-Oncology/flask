@@ -1,5 +1,5 @@
 # Oncology Sesh API: local development (production uses Dockerfile / docker-compose.yml)
-PORT ?= 8530
+PORT ?= 8587
 LOG_FILE = /tmp/flask$(PORT).log
 VENV = .venv
 PYTHON = $(VENV)/bin/python

@@ -19,7 +19,7 @@ load_dotenv(os.path.join(basedir, '.env'))
 app = Flask(__name__, instance_path=os.path.join(basedir, 'instance'))
 
 # Configure Flask Port, default to : the address the portfolio frontend calls (assets/js/api/config.js)
-app.config['FLASK_PORT'] = int(os.environ.get('FLASK_PORT') or 8530)
+app.config['FLASK_PORT'] = int(os.environ.get('FLASK_PORT') or 8587)
 
 # Allowed servers for cross-origin resource sharing (CORS)
 allowed_origins = [

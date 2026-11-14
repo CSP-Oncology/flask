@@ -5,7 +5,7 @@ Run it with:
     python main.py
 
 On start it creates the user management database (instance/volumes/user_management.db),
-adds the default users, and serves the API on http://localhost:8530
+adds the default users, and serves the API on http://localhost:8587
 """
 from flask import render_template
 
