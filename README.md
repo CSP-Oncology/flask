@@ -4,7 +4,7 @@ Flask backend for user accounts on the [Oncology Sesh site](https://github.com/C
 
 ## Run locally
 ```bash
-make            # creates .venv, installs requirements, starts the API on http://localhost:8587
+make            # creates .venv, installs requirements, starts the API on http://localhost:8530
 make stop       # stops it
 ```
 Then run `make` in the portfolio repo and visit `http://localhost:4500/login`.
