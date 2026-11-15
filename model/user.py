@@ -1,8 +1,10 @@
 """ User model and default users (same role as Open Coding Society flask model/user.py) """
+import json
 import os
 import re
 from datetime import datetime, timezone
 
+from sqlalchemy import inspect, text
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -12,6 +14,22 @@ from __init__ import app, db
 EMAIL_PATTERN = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 PHONE_PATTERN = re.compile(r'^\+?[\d\s().-]{7,20}$')
 UID_PATTERN = re.compile(r'^[A-Za-z0-9._-]{3,40}$')
+
+# Site settings a user can save to their account (Settings page), and the values each one allows
+PREFERENCES = {
+    'theme': {'light', 'dark', 'sepia', 'ocean', 'contrast'},
+    'size': {'small', 'normal', 'large', 'larger'},
+    'font': {'default', 'readable', 'serif'},
+    'motion': {'on', 'off'},
+    'spacing': {'normal', 'relaxed'},
+}
+
+
+def clean_preferences(value):
+    """ Keep only known settings with allowed values; returns None if value isn't a dict """
+    if not isinstance(value, dict):
+        return None
+    return {k: v for k, v in value.items() if k in PREFERENCES and v in PREFERENCES[k]}
 
 
 class User(db.Model):
@@ -28,6 +46,7 @@ class User(db.Model):
         _role (Column): "User" or "Admin".
         token_version (Column): Bumped on password change so older login tokens stop working.
         created_at (Column): When the account was created.
+        _preferences (Column): Saved site settings (theme, text size...) as JSON.
     """
     __tablename__ = 'users'
 
@@ -40,6 +59,7 @@ class User(db.Model):
     _role = db.Column(db.String(20), default="User", nullable=False)
     token_version = db.Column(db.Integer, default=0, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    _preferences = db.Column(db.Text, nullable=True)
 
     def __init__(self, name, uid, password=None, email=None, phone=None, role="User"):
         self._name = name
@@ -116,7 +136,15 @@ class User(db.Model):
             "role": self.role,
             "is_admin": self.is_admin(),
             "created_at": self.created_at.isoformat() if self.created_at else None,
+            "preferences": self.preferences,
         }
+
+    @property
+    def preferences(self):
+        try:
+            return clean_preferences(json.loads(self._preferences or '{}')) or {}
+        except ValueError:
+            return {}
 
     def update(self, inputs):
         """ Update name, email and/or phone from a dict; returns None if the email is taken """
@@ -126,6 +154,8 @@ class User(db.Model):
             self._email = inputs['email'].strip().lower() or None
         if 'phone' in inputs:
             self._phone = inputs['phone'].strip() or None
+        if 'preferences' in inputs:
+            self._preferences = json.dumps(inputs['preferences'])
         try:
             db.session.commit()
             return self
@@ -146,6 +176,11 @@ def initUsers():
     """
     with app.app_context():
         db.create_all()
+        # Databases made before the Settings page lack the preferences column; add it
+        columns = [c['name'] for c in inspect(db.engine).get_columns('users')]
+        if '_preferences' not in columns:
+            with db.engine.begin() as conn:
+                conn.execute(text('ALTER TABLE users ADD COLUMN _preferences TEXT'))
         seeds = [(app.config['ADMIN_USER'], app.config['ADMIN_UID'], 'Admin',
                   app.config['ADMIN_PASSWORD'], app.config['ADMIN_EMAIL'])]
         for name, uid, role in app.config['MEMBERS']:

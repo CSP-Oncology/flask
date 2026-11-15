@@ -6,7 +6,7 @@ from flask import Blueprint, request, current_app, g, jsonify
 from flask_restful import Api, Resource
 
 from api.jwt_authorize import token_required
-from model.user import User
+from model.user import User, clean_preferences
 
 
 user_api = Blueprint('user_api', __name__, url_prefix='/api')
@@ -67,7 +67,7 @@ class UserAPI:
 
         @token_required()
         def put(self):
-            """ Update the current user's name, email, phone and/or password """
+            """ Update the current user's name, email, phone, settings and/or password """
             user = g.current_user
             body = request.get_json(silent=True) or {}
             updates = {k: str(body[k]) for k in ('name', 'email', 'phone') if k in body}
@@ -75,6 +75,12 @@ class UserAPI:
             error = User.validate(**updates)
             if error:
                 return {"message": error}, 400
+
+            if 'preferences' in body:
+                preferences = clean_preferences(body['preferences'])
+                if preferences is None:
+                    return {"message": "Settings must be an object"}, 400
+                updates['preferences'] = preferences
 
             new_password = body.get('new_password')
             if new_password:
