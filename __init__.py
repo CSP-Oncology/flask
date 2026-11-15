@@ -28,6 +28,7 @@ allowed_origins = [
     'http://localhost:4000',
     'http://127.0.0.1:4000',
     'https://csp-oncology.github.io',  # Deployed frontend (GitHub Pages: csp-oncology.github.io/portfolio)
+    'https://oncologysesh.opencodingsociety.com',  # Deployed frontend (custom domain)
 ]
 # Any other deployed frontend(s), comma separated in .env
 allowed_origins += [o.strip() for o in (os.environ.get('ALLOWED_ORIGINS') or '').split(',') if o.strip()]
