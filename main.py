@@ -13,6 +13,7 @@ from __init__ import app, db
 from api.admin import admin
 from api.contact import contact_api
 from api.user import user_api
+from api.preferences import preferences_api
 from model.contact import initContacts
 from model.user import initUsers
 
@@ -20,6 +21,7 @@ from model.user import initUsers
 # Register URIs for API endpoints
 app.register_blueprint(admin)
 app.register_blueprint(user_api)
+app.register_blueprint(preferences_api)
 app.register_blueprint(contact_api)
 
 

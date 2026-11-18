@@ -24,6 +24,7 @@ python main.py      # creates instance/volumes/user_management.db and starts the
 - `api/jwt_authorize.py`: `@token_required` JWT cookie guard
 - `api/user.py`: REST API for sign up, log in/out, profile, admin user list
 - `model/contact.py`, `api/contact.py`: messages from the Sesh Contact form (admins read them on their profile page and at Data â†’ Contact Messages)
+- `api/preferences.py`: Settings page preferences, head-tracking calibration and AI themes
 - `api/admin.py`: the backend's own admin pages (login, User Management and Contact Messages tables)
 - `templates/`: pages for those admin pages
 - `.env`: secret key and passwords (not committed)
@@ -39,11 +40,12 @@ python main.py      # creates instance/volumes/user_management.db and starts the
 
 Starting passwords come from `.env`: `ADMIN_PASSWORD` for the admin and `<FIRSTNAME>_PASSWORD` for each member (e.g. `ANIKA_PASSWORD`), falling back to `DEFAULT_PASSWORD`. Anyone can change their password, email, and phone number from their profile page.
 
-Example `.env`:
+Example `.env` (create it with `nano .env` or `vim .env`):
 ```
 SECRET_KEY=change-me
 ADMIN_PASSWORD=change-me
 DEFAULT_PASSWORD=change-me
+ANTHROPIC_API_KEY=optional, for Settings > Create with AI
 ```
 
 ## Seeing the data
@@ -63,6 +65,14 @@ Log in at `http://localhost:8587/login` with an admin account and open **Data â†
 | GET | `/api/contact` | Admin only: every contact message, newest first |
 | PUT | `/api/contact` | Admin only: mark a message handled `{id, handled}` |
 | GET | `/api/contact/topics` | Topics offered in the form |
+| GET | `/api/person/get` | Current user (the Settings page's login check) |
+| GET | `/api/user/preferences` | Saved preferences in the OCS dashboard format, `{}` if none |
+| POST / PUT | `/api/user/preferences` | Save preferences `{backgroundColor, textColor, accentColor, selectionColor, fontFamily, fontSize, buttonStyle, language, ttsVoice, ttsRate, ttsPitch, ttsVolume, customThemes}` |
+| DELETE | `/api/user/preferences` | Reset preferences (keeps head-tracking calibration) |
+| GET / POST | `/api/content/HEAD_CALIBRATION` | Head-tracking calibration `{metadata: {centerX, centerY, leftX, rightX, upY, downY, calibrated}}` |
+| POST | `/api/user/ai-theme` | Design a theme from `{prompt}` with Claude (needs `ANTHROPIC_API_KEY`) |
+
+The preferences endpoints match the Open Coding Society Spring backend, so the portfolio's Settings page uses OCS's dashboard scripts unchanged. Preferences are stored on the user (`model/user.py` `clean_preferences`) and also come back in `GET /api/id`, which every page reads to sync them across devices.
 
 ## Deploy
 ```bash

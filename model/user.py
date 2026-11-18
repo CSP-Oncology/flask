@@ -15,24 +15,91 @@ EMAIL_PATTERN = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 PHONE_PATTERN = re.compile(r'^\+?[\d\s().-]{7,20}$')
 UID_PATTERN = re.compile(r'^[A-Za-z0-9._-]{3,40}$')
 
-# Site settings a user can save to their account (Settings page), and the values each one allows
-PREFERENCES = {
-    'theme': {'light', 'dark', 'sepia', 'ocean', 'contrast'},
-    'size': {'small', 'normal', 'large', 'larger'},
-    'font': {'default', 'readable', 'serif'},
-    'motion': {'on', 'off'},
-    'spacing': {'normal', 'relaxed'},
-    # Codes from LANGUAGES in the portfolio's assets/js/user-preferences.js
-    'language': {'en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'zh-CN', 'zh-TW', 'ja', 'ko',
-                 'ar', 'hi', 'vi', 'th', 'nl', 'pl', 'tr', 'uk', 'he', 'fa'},
-}
+# Site preferences a user can save to their account, in the same shape as the Open Coding
+# Society dashboard (assets/js/pages/dashboard/preferences.js on the portfolio): colors, font,
+# size, button style, language, text-to-speech, saved custom themes and head-tracking calibration.
+HEX_COLOR = re.compile(r'^#[0-9a-fA-F]{6}$')
+# Font stacks only: letters, digits, spaces, commas, quotes and hyphens (they end up in CSS)
+FONT_STACK = re.compile(r"^[A-Za-z0-9 ,'\"-]{1,160}$")
+LANGUAGES = {'', 'en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'zh-CN', 'zh-TW', 'ja', 'ko',
+             'ar', 'hi', 'vi', 'th', 'nl', 'pl', 'tr', 'uk', 'he', 'fa'}
+BUTTON_STYLES = {'default', 'rounded', 'rounded-all', 'square', 'pill'}
+CALIBRATION_KEYS = ('centerX', 'centerY', 'leftX', 'rightX', 'upY', 'downY')
+MAX_CUSTOM_THEMES = 10
+
+
+def _number(value, low, high):
+    """ value as a float within [low, high], or None """
+    if isinstance(value, bool):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if low <= number <= high else None
+
+
+def clean_theme(value):
+    """ The look part of a preferences object (colors, font, size, button style, emoji) """
+    if not isinstance(value, dict):
+        return {}
+    theme = {}
+    for key in ('bg', 'text', 'accent', 'selectionColor'):
+        if isinstance(value.get(key), str) and HEX_COLOR.match(value[key]):
+            theme[key] = value[key]
+    if isinstance(value.get('font'), str) and FONT_STACK.match(value['font']):
+        theme['font'] = value['font']
+    size = _number(value.get('size'), 10, 32)
+    if size is not None:
+        theme['size'] = int(size)
+    if value.get('buttonStyle') in BUTTON_STYLES:
+        theme['buttonStyle'] = value['buttonStyle']
+    decor = value.get('decor')
+    if isinstance(decor, list):
+        theme['decor'] = [d for d in decor if isinstance(d, str) and 0 < len(d) <= 8][:6]
+    if value.get('source') == 'ai':
+        theme['source'] = 'ai'
+    return theme
+
+
+def clean_calibration(value):
+    """ Head-tracking calibration points (0..1 each) and whether they were captured """
+    if not isinstance(value, dict):
+        return None
+    calibration = {}
+    for key in CALIBRATION_KEYS:
+        number = _number(value.get(key), 0, 1)
+        if number is not None:
+            calibration[key] = number
+    calibration['calibrated'] = bool(value.get('calibrated'))
+    return calibration
 
 
 def clean_preferences(value):
-    """ Keep only known settings with allowed values; returns None if value isn't a dict """
+    """ Keep only known preferences with valid values; returns None if value isn't a dict """
     if not isinstance(value, dict):
         return None
-    return {k: v for k, v in value.items() if k in PREFERENCES and v in PREFERENCES[k]}
+    prefs = clean_theme(value)
+    prefs.pop('source', None)
+    if value.get('language') in LANGUAGES:
+        prefs['language'] = value['language']
+    if isinstance(value.get('ttsVoice'), str) and len(value['ttsVoice']) <= 200:
+        prefs['ttsVoice'] = value['ttsVoice']
+    for key, low, high in (('ttsRate', 0.5, 2), ('ttsPitch', 0.5, 2), ('ttsVolume', 0, 1)):
+        number = _number(value.get(key), low, high)
+        if number is not None:
+            prefs[key] = number
+    themes = value.get('customThemes')
+    if isinstance(themes, dict):
+        prefs['customThemes'] = {
+            name.strip()[:30]: clean_theme(theme)
+            for name, theme in list(themes.items())[:MAX_CUSTOM_THEMES]
+            if isinstance(name, str) and name.strip()
+        }
+    calibration = clean_calibration(value.get('headCalibration'))
+    if calibration is not None:
+        prefs['headCalibration'] = calibration
+    return prefs
 
 
 class User(db.Model):
@@ -49,7 +116,7 @@ class User(db.Model):
         _role (Column): "User" or "Admin".
         token_version (Column): Bumped on password change so older login tokens stop working.
         created_at (Column): When the account was created.
-        _preferences (Column): Saved site settings (theme, text size...) as JSON.
+        _preferences (Column): Saved site preferences (see clean_preferences) as JSON.
     """
     __tablename__ = 'users'
 
@@ -158,7 +225,7 @@ class User(db.Model):
         if 'phone' in inputs:
             self._phone = inputs['phone'].strip() or None
         if 'preferences' in inputs:
-            self._preferences = json.dumps(inputs['preferences'])
+            self._preferences = json.dumps(clean_preferences(inputs['preferences']) or {})
         try:
             db.session.commit()
             return self
