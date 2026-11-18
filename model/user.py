@@ -22,6 +22,9 @@ PREFERENCES = {
     'font': {'default', 'readable', 'serif'},
     'motion': {'on', 'off'},
     'spacing': {'normal', 'relaxed'},
+    # Codes from LANGUAGES in the portfolio's assets/js/user-preferences.js
+    'language': {'en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'zh-CN', 'zh-TW', 'ja', 'ko',
+                 'ar', 'hi', 'vi', 'th', 'nl', 'pl', 'tr', 'uk', 'he', 'fa'},
 }
 
 
