@@ -74,6 +74,29 @@ class NewsArticle(db.Model):
         }
 
 
+# Sesh labels most stories just "News"; these give each one a meaningful label from its title.
+# First match wins, so the more specific kinds come first.
+TOPICS = [
+    ('Grant', r'\bgrant\b|\bsbir\b'),
+    ('Funding', r'invest|funding|raises?\b'),
+    ('Award', r'\baward|golden ticket|\bwins?\b'),
+    ('Milestone', r'final(ist)?\b|final \d|due diligence|launch'),
+    ('Recognition', r'cool compan|recogni|named|selected'),
+    ('Partnership', r'\bjoins?\b|incubator|partner|collaborat'),
+    ('Research', r'abstract|aacr|study|publish|research|data'),
+]
+
+
+def topic(title, category):
+    """ Sesh's own label, unless it is the generic "News": then one worked out from the title """
+    if category and category.lower() != 'news':
+        return category
+    for label, pattern in TOPICS:
+        if re.search(pattern, title, re.IGNORECASE):
+            return label
+    return 'News'
+
+
 def sort_date(text):
     """ "June 4, 2026" -> "2026-06-04"; "June 2026" -> "2026-06"; else "" """
     match = re.match(r'\s*([A-Za-z]+)\s+(?:(\d{1,2}),\s*)?(\d{4})', text or '')
@@ -153,7 +176,7 @@ def fetch_sesh_news():
                 'title': obj['title'].strip(),
                 'excerpt': obj.get('excerpt', '').strip(),
                 'content': obj.get('content', '').strip(),
-                'category': obj.get('category', 'News').strip(),
+                'category': topic(obj['title'], obj.get('category', '').strip()),
                 'author': obj.get('author', '').strip(),
                 'date': obj.get('date', '').strip(),
                 'image_url': image,
