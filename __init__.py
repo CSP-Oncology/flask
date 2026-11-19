@@ -50,7 +50,11 @@ app.config['DEFAULT_PASSWORD'] = os.environ.get('DEFAULT_PASSWORD') or 'password
 # Members created on first run: (name, uid, role). Each starting password is read from
 # <FIRSTNAME>_PASSWORD in .env (e.g. ANIKA_PASSWORD), falling back to DEFAULT_PASSWORD.
 # Add the team here, e.g. ('Anika Seksaria', 'anikaseksaria', 'Admin').
-app.config['MEMBERS'] = []
+app.config['MEMBERS'] = [
+    # The Open Coding Society accounts (toby and hop in OCS flask)
+    ('Thomas Edison', 'toby', 'Admin'),   # THOMAS_PASSWORD
+    ('Grace Hopper', 'hop', 'Admin'),     # GRACE_PASSWORD
+]
 
 # Browser settings
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'sesh-flask-secret-key-set-SECRET_KEY-in-env'
@@ -65,6 +69,11 @@ app.config['IS_PRODUCTION'] = (os.environ.get('IS_PRODUCTION') or 'false').lower
 app.config['SESSION_COOKIE_SECURE'] = app.config['IS_PRODUCTION']
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_NAME'] = 'sesh_session'  # Avoid colliding with other apps' "session" cookie
+
+# News: synced from Sesh's own News page (model/news.py), re-checked at most this often
+app.config['NEWS_SITE_URL'] = (os.environ.get('NEWS_SITE_URL') or 'https://www.oncologysesh.com').rstrip('/')
+app.config['NEWS_SOURCE_URL'] = app.config['NEWS_SITE_URL'] + '/news'
+app.config['NEWS_REFRESH_SECONDS'] = int(os.environ.get('NEWS_REFRESH_SECONDS') or 3600)  # 1 hour
 
 # Database settings - SQLite in instance/volumes/ (OCS layout)
 dbName = 'user_management'

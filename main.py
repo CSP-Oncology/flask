@@ -14,7 +14,9 @@ from api.admin import admin
 from api.contact import contact_api
 from api.user import user_api
 from api.preferences import preferences_api
+from api.news import news_api
 from model.contact import initContacts
+from model.news import initNews
 from model.user import initUsers
 
 
@@ -23,6 +25,7 @@ app.register_blueprint(admin)
 app.register_blueprint(user_api)
 app.register_blueprint(preferences_api)
 app.register_blueprint(contact_api)
+app.register_blueprint(news_api)
 
 
 @app.route('/')
@@ -31,9 +34,10 @@ def index():
     return render_template('index.html')
 
 
-# Create the database, default users, and contact messages table whenever the app starts (python main.py or gunicorn)
+# Create the database, default users, contact messages table and Sesh's current news whenever the app starts (python main.py or gunicorn)
 initUsers()
 initContacts()
+initNews()
 
 if __name__ == "__main__":
     print(f"Database: {app.config['SQLALCHEMY_DATABASE_URI']}")

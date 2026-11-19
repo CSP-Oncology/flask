@@ -7,6 +7,7 @@ from functools import wraps
 from flask import Blueprint, render_template, request, redirect, url_for, session
 
 from model.contact import ContactMessage
+from model.news import NewsArticle
 from model.user import User
 
 
@@ -79,6 +80,20 @@ def utable():
     for row in rows:
         row['created'] = (row['created_at'] or '')[:10]
     return render_template('table.html', title='User Management', columns=columns, rows=rows)
+
+
+@admin.route('/news/')
+@admin_required
+def news():
+    # Synced from Sesh's News page (model/news.py), like the PRC Meetings page
+    columns = [('ID', 'id'), ('Date', 'date'), ('Title', 'title'), ('Category', 'category'),
+               ('Author', 'author'), ('Featured', 'featured'), ('Active', 'active')]
+    rows = []
+    for article in NewsArticle.query.order_by(NewsArticle._active.desc(), NewsArticle._position).all():
+        row = article.read()
+        row['active'] = article._active
+        rows.append(row)
+    return render_template('table.html', title='News (synced from Sesh)', columns=columns, rows=rows)
 
 
 @admin.route('/contacts/')

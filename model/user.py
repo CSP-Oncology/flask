@@ -17,14 +17,13 @@ UID_PATTERN = re.compile(r'^[A-Za-z0-9._-]{3,40}$')
 
 # Site preferences a user can save to their account, in the same shape as the Open Coding
 # Society dashboard (assets/js/pages/dashboard/preferences.js on the portfolio): colors, font,
-# size, button style, language, text-to-speech, saved custom themes and head-tracking calibration.
+# size, button style, language, text-to-speech, and saved custom themes.
 HEX_COLOR = re.compile(r'^#[0-9a-fA-F]{6}$')
 # Font stacks only: letters, digits, spaces, commas, quotes and hyphens (they end up in CSS)
 FONT_STACK = re.compile(r"^[A-Za-z0-9 ,'\"-]{1,160}$")
 LANGUAGES = {'', 'en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'zh-CN', 'zh-TW', 'ja', 'ko',
              'ar', 'hi', 'vi', 'th', 'nl', 'pl', 'tr', 'uk', 'he', 'fa'}
 BUTTON_STYLES = {'default', 'rounded', 'rounded-all', 'square', 'pill'}
-CALIBRATION_KEYS = ('centerX', 'centerY', 'leftX', 'rightX', 'upY', 'downY')
 MAX_CUSTOM_THEMES = 10
 
 
@@ -62,19 +61,6 @@ def clean_theme(value):
     return theme
 
 
-def clean_calibration(value):
-    """ Head-tracking calibration points (0..1 each) and whether they were captured """
-    if not isinstance(value, dict):
-        return None
-    calibration = {}
-    for key in CALIBRATION_KEYS:
-        number = _number(value.get(key), 0, 1)
-        if number is not None:
-            calibration[key] = number
-    calibration['calibrated'] = bool(value.get('calibrated'))
-    return calibration
-
-
 def clean_preferences(value):
     """ Keep only known preferences with valid values; returns None if value isn't a dict """
     if not isinstance(value, dict):
@@ -96,9 +82,6 @@ def clean_preferences(value):
             for name, theme in list(themes.items())[:MAX_CUSTOM_THEMES]
             if isinstance(name, str) and name.strip()
         }
-    calibration = clean_calibration(value.get('headCalibration'))
-    if calibration is not None:
-        prefs['headCalibration'] = calibration
     return prefs
 
 
