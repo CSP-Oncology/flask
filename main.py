@@ -12,10 +12,12 @@ from flask import render_template
 from __init__ import app, db
 from api.admin import admin
 from api.contact import contact_api
+from api.survey import survey_api
 from api.user import user_api
 from api.preferences import preferences_api
 from api.news import news_api
 from model.contact import initContacts
+from model.survey import initSurveys
 from model.news import initNews
 from model.user import initUsers
 
@@ -25,6 +27,7 @@ app.register_blueprint(admin)
 app.register_blueprint(user_api)
 app.register_blueprint(preferences_api)
 app.register_blueprint(contact_api)
+app.register_blueprint(survey_api)
 app.register_blueprint(news_api)
 
 
@@ -34,9 +37,10 @@ def index():
     return render_template('index.html')
 
 
-# Create the database, default users, contact messages table and Sesh's current news whenever the app starts (python main.py or gunicorn)
+# Create the database, default users, contact messages and survey tables and Sesh's current news whenever the app starts (python main.py or gunicorn)
 initUsers()
 initContacts()
+initSurveys()
 initNews()
 
 if __name__ == "__main__":

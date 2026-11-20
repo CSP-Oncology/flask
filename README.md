@@ -38,8 +38,12 @@ python main.py      # creates instance/volumes/user_management.db and starts the
 | Name | Username | Role |
 | --- | --- | --- |
 | Sesh Admin | `admin` | Admin |
+| Thomas Edison | `toby` | Admin |
+| Nikola Tesla | `niko` | Admin |
+| Grace Hopper | `hop` | Admin |
+| John Mortensen | `jm1021` | Admin |
 
-Starting passwords come from `.env`: `ADMIN_PASSWORD` for the admin and `<FIRSTNAME>_PASSWORD` for each member (e.g. `ANIKA_PASSWORD`), falling back to `DEFAULT_PASSWORD`. Anyone can change their password, email, and phone number from their profile page.
+Starting passwords come from `.env`: `ADMIN_PASSWORD` for the admin, the Open Coding Society keys (`TEACHER_PASSWORD` for niko, `USER_PASSWORD` for hop, `MY_PASSWORD` for jm1021) and `<FIRSTNAME>_PASSWORD` for anyone else in `MEMBERS` (e.g. `ANIKA_PASSWORD`), falling back to `DEFAULT_PASSWORD`. The OCS sample `.env` works as is. Anyone can change their password, email, and phone number from their profile page.
 
 Example `.env` (create it with `nano .env` or `vim .env`):
 ```
@@ -47,11 +51,13 @@ SECRET_KEY=change-me
 ADMIN_PASSWORD=change-me
 DEFAULT_PASSWORD=change-me
 THOMAS_PASSWORD=change-me   # toby (Thomas Edison), admin
-GRACE_PASSWORD=change-me    # hop (Grace Hopper), admin
+TEACHER_PASSWORD=change-me  # niko (Nikola Tesla), admin
+USER_PASSWORD=change-me     # hop (Grace Hopper), admin
+MY_PASSWORD=change-me       # jm1021 (John Mortensen), admin
 ```
 
 ## Seeing the data
-Log in at `http://localhost:8587/login` with an admin account and open **Data → User Management**: every account with name, username, email, phone, role, and created date. Refresh the page to see new sign-ups and profile changes. **Data → Contact Messages** lists everything sent from the Sesh Contact page. Admins also see both lists on their profile page.
+Log in at `http://localhost:8587/login` with an admin account and open **Data → User Management**: every account with name, username, email, phone, role, and created date. Refresh the page to see new sign-ups and profile changes. **Data → Contact Messages** lists everything sent from the Sesh Contact page, and **Data → Survey Responses** every answer to the Sesh survey. Admins also see all three on their profile page.
 
 ## API
 | Method | Endpoint | Purpose |

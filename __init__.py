@@ -47,13 +47,22 @@ app.config['ADMIN_EMAIL'] = os.environ.get('ADMIN_EMAIL') or None
 app.config['ADMIN_PASSWORD'] = os.environ.get('ADMIN_PASSWORD') or os.environ.get('DEFAULT_PASSWORD') or 'password'
 # Password given to every other seeded user until they change it on their profile page
 app.config['DEFAULT_PASSWORD'] = os.environ.get('DEFAULT_PASSWORD') or 'password'
-# Members created on first run: (name, uid, role). Each starting password is read from
-# <FIRSTNAME>_PASSWORD in .env (e.g. ANIKA_PASSWORD), falling back to DEFAULT_PASSWORD.
-# Add the team here, e.g. ('Anika Seksaria', 'anikaseksaria', 'Admin').
+# Members created on first run: (name, uid, role, password). Existing accounts keep their password
+# but get the role listed here. Add the team here, e.g. ('Anika Seksaria', 'anikaseksaria', 'Admin', None);
+# a password of None reads <FIRSTNAME>_PASSWORD from .env (e.g. ANIKA_PASSWORD), falling back to DEFAULT_PASSWORD.
+def _ocs_member(prefix, name, uid, name_key=None):
+    """ An Open Coding Society account from the .env keys OCS flask uses (e.g. TEACHER_USER, TEACHER_UID, TEACHER_PASSWORD) """
+    return (os.environ.get(name_key or f'{prefix}_USER') or name,
+            os.environ.get(f'{prefix}_UID') or uid,
+            'Admin',
+            os.environ.get(f'{prefix}_PASSWORD'))
+
 app.config['MEMBERS'] = [
-    # The Open Coding Society accounts (toby and hop in OCS flask)
-    ('Thomas Edison', 'toby', 'Admin'),   # THOMAS_PASSWORD
-    ('Grace Hopper', 'hop', 'Admin'),     # GRACE_PASSWORD
+    # The Open Coding Society accounts, all admins here so they can read survey responses and messages
+    ('Thomas Edison', 'toby', 'Admin', None),   # THOMAS_PASSWORD, or ADMIN_PASSWORD when ADMIN_UID is toby
+    _ocs_member('TEACHER', 'Nikola Tesla', 'niko'),                   # TEACHER_PASSWORD
+    _ocs_member('USER', 'Grace Hopper', 'hop', name_key='USER_NAME'),  # USER_PASSWORD
+    _ocs_member('MY', 'John Mortensen', 'jm1021', name_key='MY_NAME'), # MY_PASSWORD or DEFAULT_PASSWORD
 ]
 
 # Browser settings

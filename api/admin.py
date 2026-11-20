@@ -7,6 +7,7 @@ from functools import wraps
 from flask import Blueprint, render_template, request, redirect, url_for, session
 
 from model.contact import ContactMessage
+from model.survey import SurveyResponse
 from model.news import NewsArticle
 from model.user import User
 
@@ -105,3 +106,18 @@ def contacts():
     for row in rows:
         row['received'] = (row['created_at'] or '')[:10]
     return render_template('table.html', title='Contact Messages', columns=columns, rows=rows)
+
+
+@admin.route('/surveys/')
+@admin_required
+def surveys():
+    columns = [('ID', 'id'), ('Received', 'received'), ('Account', 'user')] + \
+              [(label, key) for key, label in SurveyResponse.QUESTIONS.items()]
+    rows = []
+    for response in SurveyResponse.query.order_by(SurveyResponse.id.desc()).all():
+        data = response.read()
+        row = {'id': data['id'], 'user': data['user'], 'received': (data['created_at'] or '')[:10]}
+        for key, value in data['answers'].items():
+            row[key] = ', '.join(value) if isinstance(value, list) else value
+        rows.append(row)
+    return render_template('table.html', title='Survey Responses', columns=columns, rows=rows)

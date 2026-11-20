@@ -236,8 +236,8 @@ def initUsers():
                 conn.execute(text('ALTER TABLE users ADD COLUMN _preferences TEXT'))
         seeds = [(app.config['ADMIN_USER'], app.config['ADMIN_UID'], 'Admin',
                   app.config['ADMIN_PASSWORD'], app.config['ADMIN_EMAIL'])]
-        for name, uid, role in app.config['MEMBERS']:
-            password = os.environ.get(name.split()[0].upper() + '_PASSWORD') or app.config['DEFAULT_PASSWORD']
+        for name, uid, role, password in app.config['MEMBERS']:
+            password = password or os.environ.get(name.split()[0].upper() + '_PASSWORD') or app.config['DEFAULT_PASSWORD']
             seeds.append((name, uid, role, password, None))
 
         for name, uid, role, password, email in seeds:
